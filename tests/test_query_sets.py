@@ -234,3 +234,25 @@ def test_dict_model_query_set_last_returns_none_if_query_set_is_empty():
 
     query_set = DictModelQuerySet([], dict_model_class=Placeholder)
     assert query_set.last() is None
+
+
+def test_dict_model_query_set_chaining_multiple_calls():
+    @dataclass
+    class Truths(DictModel):
+        a: bool
+        b: bool
+        c: bool
+
+    query_set = DictModelQuerySet(
+        [
+            Truths(id=1, a=True, b=True, c=True),
+            Truths(id=2, a=True, b=True, c=False),
+            Truths(id=3, a=False, b=True, c=True),
+            Truths(id=4, a=False, b=True, c=False),
+            Truths(id=5, a=False, b=False, c=True),
+        ]
+    )
+
+    assert query_set.exclude(a=True).filter(c=True) == DictModelQuerySet(
+        [Truths(id=3, a=False, b=True, c=True), Truths(id=5, a=False, b=False, c=True)]
+    )
