@@ -26,6 +26,12 @@ class DictModelQuerySet(UserList):
         obj.save()
         return obj
 
+    def exclude(self, **kwargs):
+        return DictModelQuerySet(
+            [obj for obj in self.data if not self._passes_filters(obj, **kwargs)],
+            dict_model_class=self._dict_model_class,
+        )
+
     def first(self):
         try:
             return self.data[0]

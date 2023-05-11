@@ -50,6 +50,65 @@ def test_dict_model_query_set_create_retains_object_lookup():
     }
 
 
+def test_dict_model_query_set_exclude_returns_single_matching_object():
+    @dataclass
+    class Greeting(DictModel):
+        text: str
+        is_formal: bool
+
+    query_set = DictModelQuerySet(
+        [
+            Greeting(id=1, text="hello", is_formal=False),
+            Greeting(id=2, text="hello, sir", is_formal=True),
+        ]
+    )
+
+    assert query_set.exclude(is_formal=True) == DictModelQuerySet(
+        [Greeting(id=1, text="hello", is_formal=False)]
+    )
+
+
+def test_dict_model_query_set_exclude_returns_multiple_matching_objects():
+    @dataclass
+    class FastFurious(DictModel):
+        number: int
+        vin_stars: bool
+
+    query_set = DictModelQuerySet(
+        [
+            FastFurious(id=1, number=1, vin_stars=True),
+            FastFurious(id=2, number=2, vin_stars=False),
+            FastFurious(id=3, number=3, vin_stars=False),
+            FastFurious(id=4, number=4, vin_stars=True),
+        ]
+    )
+
+    assert query_set.exclude(vin_stars=False) == DictModelQuerySet(
+        [
+            FastFurious(id=1, number=1, vin_stars=True),
+            FastFurious(id=4, number=4, vin_stars=True),
+        ]
+    )
+
+
+def test_dict_model_query_set_exclude_returns_empty_set_if_no_results_found():
+    @dataclass
+    class TwilightBook(DictModel):
+        number: int
+        has_mermaids: bool
+
+    query_set = DictModelQuerySet(
+        [
+            TwilightBook(id=1, number=1, has_mermaids=False),
+            TwilightBook(id=2, number=2, has_mermaids=False),
+        ]
+    )
+
+    assert query_set.exclude(has_mermaids=False) == DictModelQuerySet(
+        [], dict_model_class=TwilightBook
+    )
+
+
 def test_dict_model_query_set_first_returns_first_result_of_query_set():
     @dataclass
     class ToDo(DictModel):
