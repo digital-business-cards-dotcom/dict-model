@@ -27,7 +27,9 @@ class DictModel:
     id: typing.Optional[int] = None
 
     @classmethod
-    def init(cls, object_data=None):
+    def init(
+        cls, object_data: typing.Optional[typing.Union[list, dict]] = None
+    ) -> type["DictModel"]:
         if cls.__name__ not in serializers.DICT_MODEL_CLASSES:
             serializers.DICT_MODEL_CLASSES[cls.__name__] = cls
 
@@ -84,7 +86,7 @@ class DictModel:
         return cls(**field_data)
 
     @classmethod
-    def object(cls, child):
+    def object(cls, child: type["DictModel"]) -> "DictModel":
         # TODO: Cleaner way to get non-standard attributes.
         field_data = {field: getattr(child, field, None) for field in cls.field_names}
         obj = cls(**field_data)
@@ -100,11 +102,12 @@ class DictModel:
             setattr(obj, attr, value)
 
         obj.save()
-
         return obj
 
     @classmethod
-    def get_custom_attributes_of_child(cls, other) -> typing.Iterable:
+    def get_custom_attributes_of_child(
+        cls, other: type["DictModel"]
+    ) -> typing.Iterable:
         if isinstance(other, dict):
             other_attrs = list(other.keys())
         else:
@@ -190,7 +193,7 @@ class DictModel:
         except KeyError:
             raise DictModel.NotPersisted(self.id)
 
-    def save(self):
+    def save(self) -> None:
         if self.id is None:
             if self._object_lookup:
                 self.id = max(self._object_lookup.keys()) + 1
