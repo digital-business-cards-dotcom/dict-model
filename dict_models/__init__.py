@@ -12,10 +12,10 @@ from .query_sets import DictModelQuerySet
 
 @dataclasses.dataclass(kw_only=True)
 class DictModel:
-    class CannotDeserializeCustomMethods(Exception):
+    class CannotDeserializeCustomAttributes(Exception):
         pass
 
-    class CannotSerializeCustomMethods(Exception):
+    class CannotSerializeCustomAttributes(Exception):
         pass
 
     class MismatchedObjectDataFormat(Exception):
@@ -25,14 +25,6 @@ class DictModel:
         pass
 
     id: typing.Optional[int] = None
-
-    def __new__(cls, *args, **kwargs) -> "DictModel":
-        instance = super().__new__(cls)
-        if cls.__name__ not in serializers.DICT_MODEL_CLASSES:
-            serializers.DICT_MODEL_CLASSES[cls.__name__] = cls
-        if not hasattr(cls, "_object_lookup"):
-            cls._object_lookup = {}
-        return instance
 
     @classmethod
     def init(cls, object_data=None):
@@ -87,7 +79,7 @@ class DictModel:
         field_data = {}
         for field, value in dict_data.items():
             if field not in cls.field_names:
-                raise DictModel.CannotDeserializeCustomMethods(field)
+                raise DictModel.CannotDeserializeCustomAttributes(field)
             field_data[field] = cls.deserialize(value)
         return cls(**field_data)
 
@@ -208,7 +200,7 @@ class DictModel:
 
     def to_dict(self) -> dict:
         if self.__class__.get_custom_attributes_of_child(self):
-            raise DictModel.CannotSerializeCustomMethods(str(self))
+            raise DictModel.CannotSerializeCustomAttributes(str(self))
 
         return {
             field: DictModel.serialize(getattr(self, field))

@@ -23,7 +23,7 @@ def example_model():
         def standard(self):
             return "This is standardized."
 
-    return Example
+    return Example.init()
 
 
 def test_dict_model_init_with_class_attribute_of_object_data_as_dict():
@@ -185,43 +185,46 @@ def test_dict_model_pk_attribute_returns_id(example_model):
 
 
 def test_dict_model_from_dict(example_model):
-    related = example_model(id=2, foo="boo")
-    example_model._object_lookup = {2: related}
+    example_model.init({2: {"foo": "boo"}})
+
     example = example_model.from_dict(
         {"id": 1, "foo": "bar", "related": {"dict_model_name": "Example", "id": 2}}
     )
-    assert example == example_model(id=1, foo="bar", related=related)
+    assert example == example_model(
+        id=1, foo="bar", related=example_model(id=2, foo="boo")
+    )
 
 
 def test_dict_model_from_dict_raises_error_with_custom_fields(example_model):
-    with pytest.raises(dict_models.DictModel.CannotDeserializeCustomMethods):
+    with pytest.raises(dict_models.DictModel.CannotDeserializeCustomAttributes):
         example_model.from_dict({"id": 1, "foo": "bar", "custom": "invalid"})
 
 
-def test_dict_model_save_retains_object_lookup(example_model):
+def test_dict_model_save_adds_to_object_lookup(example_model):
     example = example_model(id=1, foo="bar")
     example.save()
     assert example_model._object_lookup == {1: example}
 
 
 def test_dict_model_save_overwrites_existing_data(example_model):
-    example_model._object_lookup = {1: example_model(id=1, foo="bar", active=True)}
+    example_model.init({1: {"foo": "bar", "active": True}})
     example = example_model(id=1, foo="baz", active=False)
     example.save()
     assert example_model._object_lookup == {1: example}
 
 
 def test_dict_model_save_assigns_id_if_none_provided(example_model):
-    example1 = example_model(id=1, foo="bar", active=True, related=None)
-    example_model._object_lookup = {1: example1}
+    example_model.init({1: {"foo": "bar"}})
     example2 = example_model(foo="baz", active=False)
     example2.save()
     assert example2.id == 2
-    assert example_model._object_lookup == {1: example1, 2: example2}
+    assert example_model._object_lookup == {
+        1: example_model(id=1, foo="bar"),
+        2: example_model(id=2, foo="baz", active=False),
+    }
 
 
 def test_dict_model_save_defaults_id_to_1(example_model):
-    example_model._object_lookup = {}
     example = example_model(foo="baz")
     example.save()
     assert example.id == 1
@@ -229,8 +232,8 @@ def test_dict_model_save_defaults_id_to_1(example_model):
 
 
 def test_dict_model_delete_removes_instance_from_object_lookup(example_model):
+    example_model.init({1: {"foo": "bar"}})
     example = example_model(id=1, foo="bar")
-    example.save()
     example.delete()
     assert example_model._object_lookup == {}
 
@@ -252,10 +255,10 @@ def test_dict_model_to_dict(example_model):
     }
 
 
-def test_dict_model_to_dict_raises_error_with_custom_methods(example_model):
+def test_dict_model_to_dict_raises_error_with_custom_attributes(example_model):
     example = example_model(id=1, foo="bar")
     example.custom = lambda _: "this won't serialize!"
-    with pytest.raises(dict_models.DictModel.CannotSerializeCustomMethods):
+    with pytest.raises(dict_models.DictModel.CannotSerializeCustomAttributes):
         example.to_dict()
 
 
@@ -298,10 +301,12 @@ def test_dict_model_to_json_file(example_model):
     class OtherModel(dict_models.DictModel):
         name: str
 
-    example_model._object_lookup = {
-        1: example_model(id=1, foo="bar", related=OtherModel(id=2, name="hello")),
-        2: example_model(id=2, foo="baz", active=False),
-    }
+    example_model.init(
+        {
+            1: {"foo": "bar", "related": OtherModel(id=2, name="hello")},
+            2: {"foo": "baz", "active": False},
+        }
+    )
 
     example_model.to_json_file(TEST_FILES / "test.json")
     data = json.loads((TEST_FILES / "test.json").read_text())
