@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from dict_model import DictModel
-from dict_model.fields import DictModelField
+from dict_model.django import DictModelField
 
 UNSET = "UNSET"
 
