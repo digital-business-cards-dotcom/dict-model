@@ -222,6 +222,9 @@ class DictModel:
 
     @staticmethod
     def _save_object_data(model, obj) -> None:
+        if not model.has_been_initialized:
+            model.init()
+
         if obj.id is None:
             if model._object_lookup:
                 obj.id = max(model._object_lookup.keys()) + 1
@@ -237,9 +240,6 @@ class DictModel:
                 setattr(model, lookup_constant, obj)
         except AttributeError:
             pass
-
-        if not model.has_been_initialized:
-            model.set_has_been_initialized(True)
 
     @staticmethod
     def serialize(value: typing.Any) -> typing.Any:
