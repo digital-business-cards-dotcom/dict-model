@@ -29,6 +29,9 @@ class DictModelQuerySet(UserList):
         self._dict_model_class = dict_model_class
         self.data = data
 
+    def all(self):
+        return self
+
     def create(self, **kwargs) -> "DictModel":
         obj = self._dict_model_class(**kwargs)
         obj.save()

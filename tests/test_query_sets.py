@@ -29,7 +29,18 @@ def test_dict_model_query_set_raises_error_if_no_dict_model_class_is_available()
         DictModelQuerySet([])
 
 
-def test_dict_model_query_set_create_retains_object_lookup():
+def test_dict_model_query_set_all_returns_all_entries():
+    @dataclass
+    class Message(DictModel):
+        value: str
+
+    query_set = DictModelQuerySet([Message(value="hello"), Message(value="welcome")])
+    assert query_set.all() == DictModelQuerySet(
+        [Message(value="hello"), Message(value="welcome")]
+    )
+
+
+def test_dict_model_query_set_create_saves_object_data():
     @dataclass
     class Cereal(DictModel):
         name: str
