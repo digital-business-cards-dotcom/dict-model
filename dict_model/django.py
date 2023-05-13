@@ -15,6 +15,8 @@ class DictModelField(models.IntegerField):
         *args,
         **kwargs
     ):
+        if not dict_model_class.has_been_initialized:
+            dict_model_class.init()
         self._dict_model_class = dict_model_class
         if choices == UNSET:
             kwargs["choices"] = DictModelField.get_choices_for_dict_model_class(
