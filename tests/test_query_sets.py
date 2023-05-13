@@ -267,3 +267,49 @@ def test_dict_model_query_set_chaining_multiple_calls():
     assert query_set.exclude(a=True).filter(c=True) == DictModelQuerySet(
         [Truths(id=3, a=False, b=True, c=True), Truths(id=5, a=False, b=False, c=True)]
     )
+
+
+def test_query_set_order_by_sorts_results():
+    @dataclass
+    class Temperature(DictModel):
+        value: int
+
+    query_set = DictModelQuerySet(
+        [
+            Temperature(id=1, value=100),
+            Temperature(id=2, value=50),
+            Temperature(id=3, value=75),
+            Temperature(id=4, value=25),
+        ]
+    )
+    assert query_set.order_by("value") == DictModelQuerySet(
+        [
+            Temperature(id=4, value=25),
+            Temperature(id=2, value=50),
+            Temperature(id=3, value=75),
+            Temperature(id=1, value=100),
+        ]
+    )
+
+
+def test_query_set_order_by_descending_order():
+    @dataclass
+    class Number(DictModel):
+        value: int
+
+    query_set = DictModelQuerySet(
+        [
+            Number(id=1, value=100),
+            Number(id=2, value=50),
+            Number(id=3, value=75),
+            Number(id=4, value=25),
+        ]
+    )
+    assert query_set.order_by("-value") == DictModelQuerySet(
+        [
+            Number(id=1, value=100),
+            Number(id=3, value=75),
+            Number(id=2, value=50),
+            Number(id=4, value=25),
+        ]
+    )

@@ -1,7 +1,7 @@
-import re
 import dataclasses
 import functools
 import json
+import re
 import typing
 from pathlib import Path
 
@@ -176,8 +176,7 @@ class DictModel:
     def objects(cls) -> "DictModelQuerySet":
         return DictModelQuerySet(
             sorted(
-                [obj for obj in cls._object_lookup.values()],
-                key=lambda obj: obj.id
+                [obj for obj in cls._object_lookup.values()], key=lambda obj: obj.id
             ),
             dict_model_class=cls,
         )

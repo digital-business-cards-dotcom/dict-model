@@ -80,3 +80,14 @@ class DictModelQuerySet(UserList):
             if getattr(obj, field) != value:
                 return False
         return True
+
+    def order_by(self, field: str) -> "DictModelQuerySet":
+        if field.startswith("-"):
+            field = field[1:]
+            reverse = True
+        else:
+            reverse = False
+        return DictModelQuerySet(
+            sorted(self.data, key=lambda obj: getattr(obj, field), reverse=reverse),
+            dict_model_class=self._dict_model_class,
+        )
