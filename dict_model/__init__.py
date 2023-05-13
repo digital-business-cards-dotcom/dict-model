@@ -50,7 +50,7 @@ class DictModel:
         object_data: typing.Optional[typing.Union[list, dict]] = None,
         force: bool = False,
     ) -> type["DictModel"]:
-        if not force and getattr(cls, "has_been_initialized", False):
+        if not force and cls.has_been_initialized:
             raise DictModel.AlreadyInitialized(cls.__name__)
 
         serializers.DICT_MODEL_CLASSES[cls.__name__] = cls
@@ -93,7 +93,7 @@ class DictModel:
         else:
             raise DictModel.MismatchedObjectDataFormat(str(object_data))
 
-        cls.has_been_initialized = True
+        cls.set_has_been_initialized(True)
         return cls
 
     @classmethod
@@ -194,6 +194,14 @@ class DictModel:
         )
 
     @classproperty
+    def has_been_initialized(cls) -> bool:
+        return getattr(cls, "_has_been_initialized", False)
+
+    @classmethod
+    def set_has_been_initialized(cls, value: bool) -> None:
+        cls._has_been_initialized = value
+
+    @classproperty
     def field_names(cls) -> typing.Iterable:
         return sorted([field.name for field in dataclasses.fields(cls)])
 
@@ -205,7 +213,7 @@ class DictModel:
                     set(dir(cls))
                     - set(dir(DictModel))
                     - set(cls.field_names)
-                    - set(["has_been_initialized", "_object_lookup", "object_data"])
+                    - set(["_has_been_initialized", "_object_lookup", "object_data"])
                 )
             )
         )
@@ -236,8 +244,8 @@ class DictModel:
         except AttributeError:
             pass
 
-        if not getattr(model, "has_been_initialized", False):
-            model.has_been_initialized = True
+        if not model.has_been_initialized:
+            model.set_has_been_initialized(True)
 
     @staticmethod
     def serialize(value: typing.Any) -> typing.Any:
