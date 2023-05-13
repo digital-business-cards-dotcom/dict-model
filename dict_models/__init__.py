@@ -140,21 +140,24 @@ class DictModel:
             dict_model_cls = cls
 
         object_data = json_data["object_data"]
-        # Convert string keys into integers.
+        # Convert JSON string keys into integers.
         if isinstance(object_data, dict):
             object_data = {int(k): v for k, v in object_data.items()}
 
         dict_model_cls.init(object_data)
 
     @classmethod
-    def to_json_file(cls, path: typing.Union[str, Path]) -> None:
+    def to_json_file(
+        cls, path: typing.Union[str, Path], specify_model: bool = True
+    ) -> None:
         path = Path(path)
         json_data = {
-            "dict_model_name": cls.__name__,
             "object_data": {
                 id: obj.to_dict() for id, obj in cls._object_lookup.items()
             },
         }
+        if specify_model:
+            json_data["dict_model_name"] = cls.__name__
         path.write_text(json.dumps(json_data))
 
     @classproperty

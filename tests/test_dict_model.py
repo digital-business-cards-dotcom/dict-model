@@ -389,3 +389,32 @@ def test_dict_model_to_json_file(example_model):
             "2": {"id": 2, "foo": "baz", "active": False, "related": None},
         },
     }
+
+
+def test_dict_model_to_json_file_does_not_include_model_name_when_specified(
+    example_model,
+):
+    @dataclass
+    class OtherModel(dict_models.DictModel):
+        name: str
+
+    example_model.init(
+        {
+            1: {"foo": "bar", "related": OtherModel(id=2, name="hello")},
+            2: {"foo": "baz", "active": False},
+        }
+    )
+
+    example_model.to_json_file(TEST_FILES / "test.json", specify_model=False)
+    data = json.loads((TEST_FILES / "test.json").read_text())
+    assert data == {
+        "object_data": {
+            "1": {
+                "id": 1,
+                "foo": "bar",
+                "active": True,
+                "related": {"dict_model_name": "OtherModel", "id": 2},
+            },
+            "2": {"id": 2, "foo": "baz", "active": False, "related": None},
+        },
+    }
