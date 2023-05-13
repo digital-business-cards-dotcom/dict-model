@@ -18,6 +18,9 @@ class DictModel:
     class CannotSerializeCustomAttributes(Exception):
         pass
 
+    class SpecifiedModelsDoNotMatch(Exception):
+        pass
+
     class MismatchedObjectDataFormat(Exception):
         pass
 
@@ -125,14 +128,22 @@ class DictModel:
     def from_json_file(cls, path: typing.Union[str, Path]) -> None:
         path = Path(path)
         json_data = json.loads(path.read_text())
+
+        dict_model_name = json_data.get("dict_model_name")
         if cls == DictModel:
-            dict_model_name = json_data["dict_model_name"]
             dict_model_cls = serializers.DICT_MODEL_CLASSES[dict_model_name]
         else:
+            if dict_model_name and dict_model_name != cls.__name__:
+                raise DictModel.SpecifiedModelsDoNotMatch(
+                    f"{dict_model_name}, {cls.__name__}"
+                )
             dict_model_cls = cls
+
         object_data = json_data["object_data"]
+        # Convert string keys into integers.
         if isinstance(object_data, dict):
             object_data = {int(k): v for k, v in object_data.items()}
+
         dict_model_cls.init(object_data)
 
     @classmethod
