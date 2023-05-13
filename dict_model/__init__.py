@@ -15,6 +15,9 @@ __version__ = "0.0.1"
 
 @dataclasses.dataclass(kw_only=True)
 class DictModel:
+    class AlreadyInitialized(Exception):
+        pass
+
     class CannotDeserializeCustomAttributes(Exception):
         pass
 
@@ -40,13 +43,19 @@ class DictModel:
 
     @classmethod
     def init(
-        cls, object_data: typing.Optional[typing.Union[list, dict]] = None
+        cls,
+        object_data: typing.Optional[typing.Union[list, dict]] = None,
+        force: bool = False,
     ) -> type["DictModel"]:
-        if cls.__name__ not in serializers.DICT_MODEL_CLASSES:
-            serializers.DICT_MODEL_CLASSES[cls.__name__] = cls
+        if not force and getattr(cls, "_has_been_initialized", False):
+            raise DictModel.AlreadyInitialized(cls.__name__)
+
+        serializers.DICT_MODEL_CLASSES[cls.__name__] = cls
 
         cls_object_data = getattr(cls, "object_data", None)
-        if cls_object_data is not None:
+        if cls_object_data is None:
+            cls_object_data = {}
+        else:
             delattr(cls, "object_data")
 
         if object_data:
@@ -70,9 +79,6 @@ class DictModel:
             object_data = cls_object_data
 
         cls._object_lookup = {}
-        if not object_data:
-            return cls
-
         if isinstance(object_data, dict):
             for id, data in object_data.items():
                 obj = cls.from_dict({**{"id": data.pop("id", id)}, **data})
@@ -84,6 +90,7 @@ class DictModel:
         else:
             raise DictModel.MismatchedObjectDataFormat(str(object_data))
 
+        cls._has_been_initialized = True
         return cls
 
     @classmethod
@@ -132,7 +139,7 @@ class DictModel:
         )
 
     @classmethod
-    def from_json_file(cls, path: typing.Union[str, Path]) -> None:
+    def from_json_file(cls, path: typing.Union[str, Path], **kwargs) -> None:
         path = Path(path)
         json_data = json.loads(path.read_text())
 
@@ -156,7 +163,7 @@ class DictModel:
         if isinstance(object_data, dict):
             object_data = {int(k): v for k, v in object_data.items()}
 
-        dict_model_cls.init(object_data)
+        dict_model_cls.init(object_data, **kwargs)
 
     @classmethod
     def to_json_file(
@@ -193,7 +200,7 @@ class DictModel:
                     set(dir(cls))
                     - set(dir(DictModel))
                     - set(cls.field_names)
-                    - set(["_object_lookup", "object_data"])
+                    - set(["_has_been_initialized", "_object_lookup", "object_data"])
                 )
             )
         )

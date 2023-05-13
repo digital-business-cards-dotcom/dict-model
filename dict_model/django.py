@@ -1,7 +1,8 @@
 import typing
-from django.db import models
-from . import DictModel
 
+from django.db import models
+
+from . import DictModel
 
 UNSET = "__UNSET__"
 

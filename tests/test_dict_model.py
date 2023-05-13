@@ -122,7 +122,7 @@ def test_dict_model_init_with_no_preset_object_data():
         ([{"letter": "A"}], {2: {"letter": "B"}}),
     ],
 )
-def test_dict_model_init_with_mismatch_of_class_attribute_and_passed_in_object_data(
+def test_dict_model_init_raises_error_with_object_data_type_mismatch(
     cls_object_data, object_data
 ):
     @dataclass
@@ -134,7 +134,7 @@ def test_dict_model_init_with_mismatch_of_class_attribute_and_passed_in_object_d
         Alphabet.init(object_data)
 
 
-def test_dict_model_init_pass_in_object_data_as_invalid_format():
+def test_dict_model_init_raises_error_if_object_data_in_invalid_format():
     @dataclass
     class Band(dict_model.DictModel):
         name: str
@@ -143,7 +143,17 @@ def test_dict_model_init_pass_in_object_data_as_invalid_format():
         Band.init(object_data="Fugazi")
 
 
-def test_dict_model_declare_objects_with_decorator(example_model):
+def test_dict_model_init_raises_error_if_model_has_been_init_already(example_model):
+    with pytest.raises(dict_model.DictModel.AlreadyInitialized):
+        example_model.init()
+
+
+def test_dict_model_init_allows_reinitializing_if_specified(example_model):
+    example_model.init(object_data={1: {"foo": "yay"}}, force=True)
+    assert example_model._object_lookup == {1: example_model(id=1, foo="yay")}
+
+
+def test_dict_model_declare_object_with_decorator(example_model):
     related_obj = example_model(id=666, foo="bar")
 
     @example_model.object
@@ -191,7 +201,7 @@ def test_dict_model_pk_attribute_returns_id(example_model):
 
 
 def test_dict_model_from_dict(example_model):
-    example_model.init({2: {"foo": "boo"}})
+    example_model.init({2: {"foo": "boo"}}, force=True)
 
     example = example_model.from_dict(
         {"id": 1, "foo": "bar", "related": {"dict_model_name": "Example", "id": 2}}
@@ -213,14 +223,14 @@ def test_dict_model_save_adds_to_object_lookup(example_model):
 
 
 def test_dict_model_save_overwrites_existing_data(example_model):
-    example_model.init({1: {"foo": "bar", "active": True}})
+    example_model.init({1: {"foo": "bar", "active": True}}, force=True)
     example = example_model(id=1, foo="baz", active=False)
     example.save()
     assert example_model._object_lookup == {1: example}
 
 
 def test_dict_model_save_assigns_id_if_none_provided(example_model):
-    example_model.init({1: {"foo": "bar"}})
+    example_model.init({1: {"foo": "bar"}}, force=True)
     example2 = example_model(foo="baz", active=False)
     example2.save()
     assert example2.id == 2
@@ -238,7 +248,7 @@ def test_dict_model_save_defaults_id_to_1(example_model):
 
 
 def test_dict_model_delete_removes_instance_from_object_lookup(example_model):
-    example_model.init({1: {"foo": "bar"}})
+    example_model.init({1: {"foo": "bar"}}, force=True)
     example = example_model(id=1, foo="bar")
     example.delete()
     assert example_model._object_lookup == {}
@@ -279,7 +289,6 @@ def test_dict_model_from_json_file_identifies_model_and_initializes_data(
 
     OtherModel.init()
 
-    example_model.init()
     json_data = {
         "dict_model_name": "Example",
         "object_data": {
@@ -294,7 +303,7 @@ def test_dict_model_from_json_file_identifies_model_and_initializes_data(
 
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
-    dict_model.DictModel.from_json_file(TEST_FILES / "test.json")
+    dict_model.DictModel.from_json_file(TEST_FILES / "test.json", force=True)
 
     assert example_model._object_lookup == {
         1: example_model(id=1, foo="bar", active=False, related=None),
@@ -315,7 +324,6 @@ def test_dict_model_from_json_file_initializes_data_for_specific_model_without_n
 
     OtherModel.init()
 
-    example_model.init()
     json_data = {
         "object_data": {
             "1": {"foo": "bar", "active": False},
@@ -329,7 +337,7 @@ def test_dict_model_from_json_file_initializes_data_for_specific_model_without_n
 
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
-    example_model.from_json_file(TEST_FILES / "test.json")
+    example_model.from_json_file(TEST_FILES / "test.json", force=True)
 
     assert example_model._object_lookup == {
         1: example_model(id=1, foo="bar", active=False, related=None),
@@ -350,7 +358,6 @@ def test_dict_model_from_json_file_raises_error_if_no_model_is_specified(
 
     OtherModel.init()
 
-    example_model.init()
     json_data = {
         "object_data": {
             "1": {"foo": "bar", "active": False},
@@ -365,7 +372,7 @@ def test_dict_model_from_json_file_raises_error_if_no_model_is_specified(
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
     with pytest.raises(dict_model.DictModel.NoModelSpecified):
-        dict_model.DictModel.from_json_file(TEST_FILES / "test.json")
+        dict_model.DictModel.from_json_file(TEST_FILES / "test.json", force=True)
 
 
 def test_dict_model_from_json_file_raises_error_if_invalid_model_is_specified(
@@ -379,7 +386,6 @@ def test_dict_model_from_json_file_raises_error_if_invalid_model_is_specified(
 
     OtherModel.init()
 
-    example_model.init()
     json_data = {
         "dict_model_name": "INVALID",
         "object_data": {
@@ -395,7 +401,7 @@ def test_dict_model_from_json_file_raises_error_if_invalid_model_is_specified(
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
     with pytest.raises(dict_model.DictModel.UnknownModelSpecified):
-        dict_model.DictModel.from_json_file(TEST_FILES / "test.json")
+        dict_model.DictModel.from_json_file(TEST_FILES / "test.json", force=True)
 
 
 def test_dict_model_from_json_file_raises_error_if_model_in_json_does_not_match(
@@ -409,7 +415,6 @@ def test_dict_model_from_json_file_raises_error_if_model_in_json_does_not_match(
 
     OtherModel.init()
 
-    example_model.init()
     json_data = {
         "dict_model_name": "OtherModel",
         "object_data": {
@@ -425,6 +430,34 @@ def test_dict_model_from_json_file_raises_error_if_model_in_json_does_not_match(
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
     with pytest.raises(example_model.SpecifiedModelsDoNotMatch):
+        example_model.from_json_file(TEST_FILES / "test.json", force=True)
+
+
+def test_dict_model_from_json_file_raises_error_if_model_already_init_and_not_forced(
+    example_model,
+):
+    @dataclass
+    class OtherModel(dict_model.DictModel):
+        name: str
+
+        object_data = {1: {"name": "hello"}}
+
+    OtherModel.init()
+
+    json_data = {
+        "object_data": {
+            "1": {"foo": "bar", "active": False},
+            "2": {
+                "foo": "baz",
+                "active": True,
+                "related": {"dict_model_name": "OtherModel", "id": 1},
+            },
+        },
+    }
+
+    (TEST_FILES / "test.json").write_text(json.dumps(json_data))
+
+    with pytest.raises(dict_model.DictModel.AlreadyInitialized):
         example_model.from_json_file(TEST_FILES / "test.json")
 
 
@@ -437,7 +470,8 @@ def test_dict_model_to_json_file(example_model):
         {
             1: {"foo": "bar", "related": OtherModel(id=2, name="hello")},
             2: {"foo": "baz", "active": False},
-        }
+        },
+        force=True,
     )
 
     example_model.to_json_file(TEST_FILES / "test.json")
@@ -467,7 +501,8 @@ def test_dict_model_to_json_file_does_not_include_model_name_when_specified(
         {
             1: {"foo": "bar", "related": OtherModel(id=2, name="hello")},
             2: {"foo": "baz", "active": False},
-        }
+        },
+        force=True,
     )
 
     example_model.to_json_file(TEST_FILES / "test.json", specify_model=False)
@@ -486,7 +521,9 @@ def test_dict_model_to_json_file_does_not_include_model_name_when_specified(
 
 
 def test_dict_model_objects_returns_query_set_of_objects_ordered_by_id(example_model):
-    example_model.init({2: {"foo": "boo"}, 1: {"foo": "bar"}, 3: {"foo": "baz"}})
+    example_model.init(
+        {2: {"foo": "boo"}, 1: {"foo": "bar"}, 3: {"foo": "baz"}}, force=True
+    )
 
     assert example_model.objects == DictModelQuerySet(
         [
