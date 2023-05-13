@@ -175,7 +175,10 @@ class DictModel:
     @classproperty
     def objects(cls) -> "DictModelQuerySet":
         return DictModelQuerySet(
-            [obj for obj in cls._object_lookup.values()],
+            sorted(
+                [obj for obj in cls._object_lookup.values()],
+                key=lambda obj: obj.id
+            ),
             dict_model_class=cls,
         )
 
