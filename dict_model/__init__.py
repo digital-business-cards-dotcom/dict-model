@@ -7,7 +7,7 @@ from pathlib import Path
 
 from django.utils.functional import classproperty
 
-from . import deserializers, serializers, lookup
+from . import deserializers, lookup, serializers
 from .query_sets import DictModelQuerySet
 
 __version__ = "0.0.1"

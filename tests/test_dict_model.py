@@ -5,8 +5,8 @@ from typing import Optional
 import pytest
 
 import dict_model
-from dict_model.query_sets import DictModelQuerySet
 from dict_model.lookup import DictModelNotFound
+from dict_model.query_sets import DictModelQuerySet
 
 from . import TEST_FILES
 

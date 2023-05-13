@@ -40,6 +40,12 @@ class DictModelField(models.IntegerField):
     def non_db_attrs(self):
         return super().non_db_attrs + ("_dict_model_class")
 
+    def clean(self, value, model_instance):
+        value = self.to_python(value).id
+        self.validate(value, model_instance)
+        self.run_validators(value)
+        return value
+
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
         args = [self._dict_model_class.__name__] + args
