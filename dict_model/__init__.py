@@ -24,6 +24,9 @@ class DictModel:
     class CannotSerializeCustomAttributes(Exception):
         pass
 
+    class HasNotBeenInitialized(Exception):
+        pass
+
     class NoModelSpecified(Exception):
         pass
 
@@ -47,7 +50,7 @@ class DictModel:
         object_data: typing.Optional[typing.Union[list, dict]] = None,
         force: bool = False,
     ) -> type["DictModel"]:
-        if not force and getattr(cls, "_has_been_initialized", False):
+        if not force and getattr(cls, "has_been_initialized", False):
             raise DictModel.AlreadyInitialized(cls.__name__)
 
         serializers.DICT_MODEL_CLASSES[cls.__name__] = cls
@@ -90,7 +93,7 @@ class DictModel:
         else:
             raise DictModel.MismatchedObjectDataFormat(str(object_data))
 
-        cls._has_been_initialized = True
+        cls.has_been_initialized = True
         return cls
 
     @classmethod
@@ -181,6 +184,8 @@ class DictModel:
 
     @classproperty
     def objects(cls) -> "DictModelQuerySet":
+        if not hasattr(cls, "_object_lookup"):
+            raise DictModel.HasNotBeenInitialized(cls.__name__)
         return DictModelQuerySet(
             sorted(
                 [obj for obj in cls._object_lookup.values()], key=lambda obj: obj.id
@@ -200,7 +205,7 @@ class DictModel:
                     set(dir(cls))
                     - set(dir(DictModel))
                     - set(cls.field_names)
-                    - set(["_has_been_initialized", "_object_lookup", "object_data"])
+                    - set(["has_been_initialized", "_object_lookup", "object_data"])
                 )
             )
         )
@@ -230,6 +235,9 @@ class DictModel:
                 setattr(model, lookup_constant, obj)
         except AttributeError:
             pass
+
+        if not getattr(model, "has_been_initialized", False):
+            model.has_been_initialized = True
 
     @staticmethod
     def serialize(value: typing.Any) -> typing.Any:

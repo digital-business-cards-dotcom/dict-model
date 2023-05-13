@@ -532,3 +532,12 @@ def test_dict_model_objects_returns_query_set_of_objects_ordered_by_id(example_m
             example_model(id=3, foo="baz"),
         ]
     )
+
+
+def test_dict_model_objects_raises_error_if_model_has_not_been_initialized():
+    @dataclass
+    class PizzaSize(dict_model.DictModel):
+        name: str
+
+    with pytest.raises(dict_model.DictModel.HasNotBeenInitialized):
+        PizzaSize.objects
