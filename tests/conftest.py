@@ -7,7 +7,7 @@ from . import TEST_FILES
 
 @pytest.fixture(autouse=True)
 def reset_serializers(mocker):
-    mocker.patch.dict("dict_models.serializers.DICT_MODEL_CLASSES", {})
+    mocker.patch.dict("dict_model.serializers.DICT_MODEL_CLASSES", {})
 
 
 @pytest.fixture(autouse=True)

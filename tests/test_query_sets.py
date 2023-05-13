@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from dict_models import DictModel
-from dict_models.query_sets import DictModelQuerySet
+from dict_model import DictModel
+from dict_model.query_sets import DictModelQuerySet
 
 
 def test_dict_model_query_set_assigns_dict_model_class_explicitly_if_assigned():

@@ -4,7 +4,7 @@ from typing import Optional
 
 import pytest
 
-import dict_models
+import dict_model
 
 from . import TEST_FILES
 
@@ -12,10 +12,10 @@ from . import TEST_FILES
 @pytest.fixture
 def example_model():
     @dataclass
-    class Example(dict_models.DictModel):
+    class Example(dict_model.DictModel):
         foo: str
         active: bool = True
-        related: Optional[dict_models.DictModel] = None
+        related: Optional[dict_model.DictModel] = None
 
         def report(self):
             return "None implemented"
@@ -28,7 +28,7 @@ def example_model():
 
 def test_dict_model_init_with_class_attribute_of_object_data_as_dict():
     @dataclass
-    class OtherExample(dict_models.DictModel):
+    class OtherExample(dict_model.DictModel):
         name: str
 
         object_data = {1: {"name": "alex"}, 2: {"name": "zoey"}}
@@ -43,7 +43,7 @@ def test_dict_model_init_with_class_attribute_of_object_data_as_dict():
 
 def test_dict_model_init_with_class_attribute_of_object_data_as_list():
     @dataclass
-    class AnotherExample(dict_models.DictModel):
+    class AnotherExample(dict_model.DictModel):
         name: str
 
         object_data = [{"name": "alex"}, {"name": "zoey"}]
@@ -57,7 +57,7 @@ def test_dict_model_init_with_class_attribute_of_object_data_as_list():
 
 def test_dict_model_init_with_object_data_passed_in():
     @dataclass
-    class Party(dict_models.DictModel):
+    class Party(dict_model.DictModel):
         name: str
 
     Party.init(object_data={1: {"name": "birthday"}, 2: {"name": "office"}})
@@ -69,7 +69,7 @@ def test_dict_model_init_with_object_data_passed_in():
 
 def test_dict_model_init_with_mix_of_class_attribute_and_passed_in_dict():
     @dataclass
-    class Crime(dict_models.DictModel):
+    class Crime(dict_model.DictModel):
         name: str
         severity: int
 
@@ -85,7 +85,7 @@ def test_dict_model_init_with_mix_of_class_attribute_and_passed_in_dict():
 
 def test_dict_model_init_with_mix_of_class_attribute_and_passed_in_list():
     @dataclass
-    class GoodDeed(dict_models.DictModel):
+    class GoodDeed(dict_model.DictModel):
         name: str
         severity: int
 
@@ -101,7 +101,7 @@ def test_dict_model_init_with_mix_of_class_attribute_and_passed_in_list():
 
 def test_dict_model_init_with_no_preset_object_data():
     @dataclass
-    class BusLine(dict_models.DictModel):
+    class BusLine(dict_model.DictModel):
         name: str
         frequency: int
 
@@ -120,20 +120,20 @@ def test_dict_model_init_with_mismatch_of_class_attribute_and_passed_in_object_d
     cls_object_data, object_data
 ):
     @dataclass
-    class Alphabet(dict_models.DictModel):
+    class Alphabet(dict_model.DictModel):
         letter: str
 
     Alphabet.object_data = cls_object_data
-    with pytest.raises(dict_models.DictModel.MismatchedObjectDataFormat):
+    with pytest.raises(dict_model.DictModel.MismatchedObjectDataFormat):
         Alphabet.init(object_data)
 
 
 def test_dict_model_init_pass_in_object_data_as_invalid_format():
     @dataclass
-    class Band(dict_models.DictModel):
+    class Band(dict_model.DictModel):
         name: str
 
-    with pytest.raises(dict_models.DictModel.MismatchedObjectDataFormat):
+    with pytest.raises(dict_model.DictModel.MismatchedObjectDataFormat):
         Band.init(object_data="Fugazi")
 
 
@@ -196,7 +196,7 @@ def test_dict_model_from_dict(example_model):
 
 
 def test_dict_model_from_dict_raises_error_with_custom_fields(example_model):
-    with pytest.raises(dict_models.DictModel.CannotDeserializeCustomAttributes):
+    with pytest.raises(dict_model.DictModel.CannotDeserializeCustomAttributes):
         example_model.from_dict({"id": 1, "foo": "bar", "custom": "invalid"})
 
 
@@ -240,7 +240,7 @@ def test_dict_model_delete_removes_instance_from_object_lookup(example_model):
 
 def test_dict_model_delete_raises_error_if_not_persisted(example_model):
     example = example_model(foo="bar")
-    with pytest.raises(dict_models.DictModel.NotPersisted):
+    with pytest.raises(dict_model.DictModel.NotPersisted):
         example.delete()
 
 
@@ -251,14 +251,14 @@ def test_dict_model_to_dict(example_model):
         "id": 1,
         "foo": "bar",
         "active": True,
-        "related": dict_models.serializers.dict_model(related),
+        "related": dict_model.serializers.dict_model(related),
     }
 
 
 def test_dict_model_to_dict_raises_error_with_custom_attributes(example_model):
     example = example_model(id=1, foo="bar")
     example.custom = lambda _: "this won't serialize!"
-    with pytest.raises(dict_models.DictModel.CannotSerializeCustomAttributes):
+    with pytest.raises(dict_model.DictModel.CannotSerializeCustomAttributes):
         example.to_dict()
 
 
@@ -266,7 +266,7 @@ def test_dict_model_from_json_file_identifies_model_and_initializes_data(
     example_model,
 ):
     @dataclass
-    class OtherModel(dict_models.DictModel):
+    class OtherModel(dict_model.DictModel):
         name: str
 
         object_data = {1: {"name": "hello"}}
@@ -288,7 +288,7 @@ def test_dict_model_from_json_file_identifies_model_and_initializes_data(
 
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
-    dict_models.DictModel.from_json_file(TEST_FILES / "test.json")
+    dict_model.DictModel.from_json_file(TEST_FILES / "test.json")
 
     assert example_model._object_lookup == {
         1: example_model(id=1, foo="bar", active=False, related=None),
@@ -302,7 +302,7 @@ def test_dict_model_from_json_file_initializes_data_for_specific_model_without_n
     example_model,
 ):
     @dataclass
-    class OtherModel(dict_models.DictModel):
+    class OtherModel(dict_model.DictModel):
         name: str
 
         object_data = {1: {"name": "hello"}}
@@ -337,7 +337,7 @@ def test_dict_model_from_json_file_raises_error_if_no_model_is_specified(
     example_model,
 ):
     @dataclass
-    class OtherModel(dict_models.DictModel):
+    class OtherModel(dict_model.DictModel):
         name: str
 
         object_data = {1: {"name": "hello"}}
@@ -358,15 +358,15 @@ def test_dict_model_from_json_file_raises_error_if_no_model_is_specified(
 
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
-    with pytest.raises(dict_models.DictModel.NoModelSpecified):
-        dict_models.DictModel.from_json_file(TEST_FILES / "test.json")
+    with pytest.raises(dict_model.DictModel.NoModelSpecified):
+        dict_model.DictModel.from_json_file(TEST_FILES / "test.json")
 
 
 def test_dict_model_from_json_file_raises_error_if_invalid_model_is_specified(
     example_model,
 ):
     @dataclass
-    class OtherModel(dict_models.DictModel):
+    class OtherModel(dict_model.DictModel):
         name: str
 
         object_data = {1: {"name": "hello"}}
@@ -388,15 +388,15 @@ def test_dict_model_from_json_file_raises_error_if_invalid_model_is_specified(
 
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
-    with pytest.raises(dict_models.DictModel.UnknownModelSpecified):
-        dict_models.DictModel.from_json_file(TEST_FILES / "test.json")
+    with pytest.raises(dict_model.DictModel.UnknownModelSpecified):
+        dict_model.DictModel.from_json_file(TEST_FILES / "test.json")
 
 
 def test_dict_model_from_json_file_raises_error_if_model_in_json_does_not_match(
     example_model,
 ):
     @dataclass
-    class OtherModel(dict_models.DictModel):
+    class OtherModel(dict_model.DictModel):
         name: str
 
         object_data = {1: {"name": "hello"}}
@@ -424,7 +424,7 @@ def test_dict_model_from_json_file_raises_error_if_model_in_json_does_not_match(
 
 def test_dict_model_to_json_file(example_model):
     @dataclass
-    class OtherModel(dict_models.DictModel):
+    class OtherModel(dict_model.DictModel):
         name: str
 
     example_model.init(
@@ -454,7 +454,7 @@ def test_dict_model_to_json_file_does_not_include_model_name_when_specified(
     example_model,
 ):
     @dataclass
-    class OtherModel(dict_models.DictModel):
+    class OtherModel(dict_model.DictModel):
         name: str
 
     example_model.init(
