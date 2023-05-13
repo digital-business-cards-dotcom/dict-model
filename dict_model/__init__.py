@@ -9,6 +9,8 @@ from django.utils.functional import classproperty
 from . import deserializers, serializers
 from .query_sets import DictModelQuerySet
 
+__version__ = "0.0.1"
+
 
 @dataclasses.dataclass(kw_only=True)
 class DictModel:
