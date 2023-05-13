@@ -6,7 +6,7 @@ from dict_model.django import DictModelField
 UNSET = "UNSET"
 
 
-def test_dict_model_field_get_choices_for_dict_model_class_returns_id_and_name_pairs():
+def test_dict_model_field_get_choices_for_dict_model_class_returns_id_and_choice():
     @dataclass
     class Phony(DictModel):
         name: str
@@ -23,6 +23,29 @@ def test_dict_model_field_get_choices_for_dict_model_class_returns_id_and_name_p
         (1, "Doclie"),
         (2, "Guchi"),
         (3, "Gwuess"),
+    ]
+
+
+def test_dict_model_field_get_choices_for_dict_model_uses_choice_attr_if_provided():
+    @dataclass
+    class Season(DictModel):
+        name: str
+        choice: str
+
+        object_data = {
+            1: {"name": "Summer", "choice": "SUM"},
+            2: {"name": "Fall", "choice": "FAL"},
+            3: {"name": "Winter", "choice": "WIN"},
+            4: {"name": "Spring", "choice": "SPR"},
+        }
+
+    Season.init()
+
+    assert DictModelField.get_choices_for_dict_model_class(Season) == [
+        (1, "SUM"),
+        (2, "FAL"),
+        (3, "WIN"),
+        (4, "SPR"),
     ]
 
 

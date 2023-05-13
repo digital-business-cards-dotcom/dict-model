@@ -31,7 +31,10 @@ class DictModelField(models.IntegerField):
 
     @staticmethod
     def get_choices_for_dict_model_class(dict_model_class: typing.Type[DictModel]):
-        return [(obj.id, obj.name) for obj in dict_model_class.objects.all()]
+        return [
+            (obj.id, getattr(obj, "choice", obj.name))
+            for obj in dict_model_class.objects.all()
+        ]
 
     @property
     def non_db_attrs(self):
