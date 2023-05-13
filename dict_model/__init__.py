@@ -7,7 +7,7 @@ from pathlib import Path
 
 from django.utils.functional import classproperty
 
-from . import deserializers, serializers
+from . import deserializers, serializers, lookup
 from .query_sets import DictModelQuerySet
 
 __version__ = "0.0.1"
@@ -39,9 +39,6 @@ class DictModel:
     class NotPersisted(Exception):
         pass
 
-    class UnknownModelSpecified(Exception):
-        pass
-
     id: typing.Optional[int] = None
 
     @classmethod
@@ -53,7 +50,7 @@ class DictModel:
         if not force and cls.has_been_initialized:
             raise DictModel.AlreadyInitialized(cls.__name__)
 
-        serializers.DICT_MODEL_CLASSES[cls.__name__] = cls
+        lookup.set_dict_model_class(cls.__name__, cls)
 
         cls_object_data = getattr(cls, "object_data", None)
         if cls_object_data is None:
@@ -150,10 +147,7 @@ class DictModel:
         if cls == DictModel:
             if not dict_model_name:
                 raise DictModel.NoModelSpecified()
-            try:
-                dict_model_cls = serializers.DICT_MODEL_CLASSES[dict_model_name]
-            except KeyError:
-                raise DictModel.UnknownModelSpecified(dict_model_name)
+            dict_model_cls = lookup.get_dict_model_class(dict_model_name)
         else:
             if dict_model_name and dict_model_name != cls.__name__:
                 raise DictModel.SpecifiedModelsDoNotMatch(

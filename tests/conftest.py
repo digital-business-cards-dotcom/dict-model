@@ -7,7 +7,6 @@ from . import TEST_FILES
 
 @pytest.fixture(autouse=True)
 def reset_lookup(mocker):
-    mocker.patch.dict("dict_model.serializers.DICT_MODEL_CLASSES", {})
     mocker.patch.dict("dict_model.lookup.DICT_MODEL_CLASSES", {})
 
 

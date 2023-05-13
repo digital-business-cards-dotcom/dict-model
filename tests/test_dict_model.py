@@ -6,6 +6,7 @@ import pytest
 
 import dict_model
 from dict_model.query_sets import DictModelQuerySet
+from dict_model.lookup import DictModelNotFound
 
 from . import TEST_FILES
 
@@ -400,7 +401,7 @@ def test_dict_model_from_json_file_raises_error_if_invalid_model_is_specified(
 
     (TEST_FILES / "test.json").write_text(json.dumps(json_data))
 
-    with pytest.raises(dict_model.DictModel.UnknownModelSpecified):
+    with pytest.raises(DictModelNotFound):
         dict_model.DictModel.from_json_file(TEST_FILES / "test.json", force=True)
 
 

@@ -3,8 +3,6 @@ import typing
 if typing.TYPE_CHECKING:
     from . import DictModel
 
-DICT_MODEL_CLASSES = {}
-
 
 def dict_model(value: "DictModel") -> dict:
     if value.id is None:
