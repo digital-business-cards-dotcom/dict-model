@@ -262,7 +262,7 @@ def test_dict_model_to_dict_raises_error_with_custom_attributes(example_model):
         example.to_dict()
 
 
-def test_dict_model_from_json_file_identifies_model_from_name_and_initializes_data(
+def test_dict_model_from_json_file_identifies_model_and_initializes_data(
     example_model,
 ):
     @dataclass
@@ -331,6 +331,65 @@ def test_dict_model_from_json_file_initializes_data_for_specific_model_without_n
             id=2, foo="baz", active=True, related=OtherModel(id=1, name="hello")
         ),
     }
+
+
+def test_dict_model_from_json_file_raises_error_if_no_model_is_specified(
+    example_model,
+):
+    @dataclass
+    class OtherModel(dict_models.DictModel):
+        name: str
+
+        object_data = {1: {"name": "hello"}}
+
+    OtherModel.init()
+
+    example_model.init()
+    json_data = {
+        "object_data": {
+            "1": {"foo": "bar", "active": False},
+            "2": {
+                "foo": "baz",
+                "active": True,
+                "related": {"dict_model_name": "OtherModel", "id": 1},
+            },
+        },
+    }
+
+    (TEST_FILES / "test.json").write_text(json.dumps(json_data))
+
+    with pytest.raises(dict_models.DictModel.NoModelSpecified):
+        dict_models.DictModel.from_json_file(TEST_FILES / "test.json")
+
+
+def test_dict_model_from_json_file_raises_error_if_invalid_model_is_specified(
+    example_model,
+):
+    @dataclass
+    class OtherModel(dict_models.DictModel):
+        name: str
+
+        object_data = {1: {"name": "hello"}}
+
+    OtherModel.init()
+
+    example_model.init()
+    json_data = {
+        "dict_model_name": "INVALID",
+        "object_data": {
+            "1": {"foo": "bar", "active": False},
+            "2": {
+                "foo": "baz",
+                "active": True,
+                "related": {"dict_model_name": "OtherModel", "id": 1},
+            },
+        },
+    }
+
+    (TEST_FILES / "test.json").write_text(json.dumps(json_data))
+
+    with pytest.raises(dict_models.DictModel.UnknownModelSpecified):
+        dict_models.DictModel.from_json_file(TEST_FILES / "test.json")
 
 
 def test_dict_model_from_json_file_raises_error_if_model_in_json_does_not_match(

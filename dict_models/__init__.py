@@ -18,6 +18,9 @@ class DictModel:
     class CannotSerializeCustomAttributes(Exception):
         pass
 
+    class NoModelSpecified(Exception):
+        pass
+
     class SpecifiedModelsDoNotMatch(Exception):
         pass
 
@@ -25,6 +28,9 @@ class DictModel:
         pass
 
     class NotPersisted(Exception):
+        pass
+
+    class UnknownModelSpecified(Exception):
         pass
 
     id: typing.Optional[int] = None
@@ -131,7 +137,12 @@ class DictModel:
 
         dict_model_name = json_data.get("dict_model_name")
         if cls == DictModel:
-            dict_model_cls = serializers.DICT_MODEL_CLASSES[dict_model_name]
+            if not dict_model_name:
+                raise DictModel.NoModelSpecified()
+            try:
+                dict_model_cls = serializers.DICT_MODEL_CLASSES[dict_model_name]
+            except KeyError:
+                raise DictModel.UnknownModelSpecified(dict_model_name)
         else:
             if dict_model_name and dict_model_name != cls.__name__:
                 raise DictModel.SpecifiedModelsDoNotMatch(
