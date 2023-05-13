@@ -26,7 +26,7 @@ def example_model():
     return Example.init()
 
 
-def test_dict_model_init_with_class_attribute_of_object_data_as_dict():
+def test_dict_model_init_with_class_attribute_of_object_data_as_dict_initializes_data():
     @dataclass
     class OtherExample(dict_model.DictModel):
         name: str
@@ -35,10 +35,15 @@ def test_dict_model_init_with_class_attribute_of_object_data_as_dict():
 
     OtherExample.init()
 
+    # Sets object data.
     assert OtherExample._object_lookup == {
         1: OtherExample(id=1, name="alex"),
         2: OtherExample(id=2, name="zoey"),
     }
+
+    # Sets convenience lookup constants.
+    assert OtherExample.ALEX == OtherExample(id=1, name="alex")
+    assert OtherExample.ZOEY == OtherExample(id=2, name="zoey")
 
 
 def test_dict_model_init_with_class_attribute_of_object_data_as_list():

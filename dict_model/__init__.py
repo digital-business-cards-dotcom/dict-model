@@ -1,3 +1,4 @@
+import re
 import dataclasses
 import functools
 import json
@@ -68,20 +69,18 @@ class DictModel:
         else:
             object_data = cls_object_data
 
+        cls._object_lookup = {}
         if not object_data:
-            cls._object_lookup = {}
             return cls
 
         if isinstance(object_data, dict):
-            cls._object_lookup = {
-                id: cls.from_dict({**{"id": data.pop("id", id)}, **data})
-                for id, data in object_data.items()
-            }
+            for id, data in object_data.items():
+                obj = cls.from_dict({**{"id": data.pop("id", id)}, **data})
+                cls._save_object_data(cls, obj)
         elif isinstance(object_data, list):
-            cls._object_lookup = {
-                idx + 1: cls.from_dict({**{"id": data.pop("id", idx + 1)}, **data})
-                for idx, data in enumerate(object_data)
-            }
+            for idx, data in enumerate(object_data):
+                obj = cls.from_dict({**{"id": data.pop("id", idx + 1)}, **data})
+                cls._save_object_data(cls, obj)
         else:
             raise DictModel.MismatchedObjectDataFormat(str(object_data))
 
@@ -202,6 +201,28 @@ class DictModel:
         return self.id
 
     @staticmethod
+    def _snake_case(pascal_case: str) -> str:
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", pascal_case).lower()
+
+    @staticmethod
+    def _save_object_data(model, obj) -> None:
+        if obj.id is None:
+            if model._object_lookup:
+                obj.id = max(model._object_lookup.keys()) + 1
+            else:
+                obj.id = 1
+
+        model._object_lookup[obj.id] = obj
+
+        # When available, set a constant for quick lookup, based on the `name` attribute
+        try:
+            lookup_constant = model._snake_case(obj.name).upper()
+            if not hasattr(model, lookup_constant):
+                setattr(model, lookup_constant, obj)
+        except AttributeError:
+            pass
+
+    @staticmethod
     def serialize(value: typing.Any) -> typing.Any:
         if isinstance(value, DictModel):
             return serializers.dict_model(value)
@@ -221,12 +242,7 @@ class DictModel:
             raise DictModel.NotPersisted(self.id)
 
     def save(self) -> None:
-        if self.id is None:
-            if self._object_lookup:
-                self.id = max(self._object_lookup.keys()) + 1
-            else:
-                self.id = 1
-        self.__class__._object_lookup[self.id] = self
+        self._save_object_data(self.__class__, self)
 
     def to_dict(self) -> dict:
         if self.__class__.get_custom_attributes_of_child(self):
