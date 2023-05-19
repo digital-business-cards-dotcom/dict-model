@@ -14,7 +14,7 @@ def test_dict_model_object_manager_create_saves_object():
     object_manager = dict_model.DictModelObjectManager(Empty)
     obj = object_manager.create(name="hello")
     assert obj.name == "hello"
-    assert Empty._object_lookup == {1: obj}
+    assert Empty.object_lookup == {1: obj}
 
 
 def test_dict_model_object_manager_all_returns_query_set_of_all_objects_ordered_by_id():

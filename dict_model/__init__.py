@@ -21,7 +21,7 @@ class DictModelObjectManager:
     def all(self) -> "DictModelQuerySet":
         return DictModelQuerySet(
             sorted(
-                [obj for obj in self.dict_model_class._object_lookup.values()],
+                [obj for obj in self.dict_model_class.object_lookup.values()],
                 key=lambda obj: obj.id,
             ),
             dict_model_class=self.dict_model_class,
@@ -113,7 +113,7 @@ class DictModel:
         else:
             object_data = cls_object_data
 
-        cls._object_lookup = {}
+        cls.object_lookup = {}
         if isinstance(object_data, dict):
             for id, data in object_data.items():
                 obj = cls.from_dict({**{"id": data.pop("id", id)}, **data})
@@ -204,7 +204,7 @@ class DictModel:
         path = Path(path)
         json_data = {
             "object_data": {
-                id: obj.to_dict() for id, obj in cls._object_lookup.items()
+                id: obj.to_dict() for id, obj in cls.object_lookup.items()
             },
         }
         if specify_model:
@@ -213,7 +213,7 @@ class DictModel:
 
     @classproperty
     def objects(cls) -> "DictModelObjectManager":
-        if not hasattr(cls, "_object_lookup"):
+        if not hasattr(cls, "object_lookup"):
             raise DictModel.HasNotBeenInitialized(cls.__name__)
         return DictModelObjectManager(cls)
 
@@ -237,7 +237,7 @@ class DictModel:
                     set(dir(cls))
                     - set(dir(DictModel))
                     - set(cls.field_names)
-                    - set(["_has_been_initialized", "_object_lookup", "object_data"])
+                    - set(["_has_been_initialized", "object_lookup", "object_data"])
                 )
             )
         )
@@ -256,12 +256,12 @@ class DictModel:
             model.init()
 
         if obj.id is None:
-            if model._object_lookup:
-                obj.id = max(model._object_lookup.keys()) + 1
+            if model.object_lookup:
+                obj.id = max(model.object_lookup.keys()) + 1
             else:
                 obj.id = 1
 
-        model._object_lookup[obj.id] = obj
+        model.object_lookup[obj.id] = obj
 
         # When available, set a constant for quick lookup, based on the `name` attribute
         try:
@@ -293,7 +293,7 @@ class DictModel:
 
     def delete(self) -> None:
         try:
-            del self._object_lookup[self.id]
+            del self.object_lookup[self.id]
         except KeyError:
             raise DictModel.NotPersisted(self.id)
 
