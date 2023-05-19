@@ -1,7 +1,12 @@
 import typing
+from datetime import datetime
 
 if typing.TYPE_CHECKING:
     from . import DictModel
+
+
+def datetime(value: datetime) -> str:
+    return value.isoformat()
 
 
 def dict_model(value: "DictModel") -> dict:
