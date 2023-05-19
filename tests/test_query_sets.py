@@ -61,6 +61,48 @@ def test_dict_model_query_set_create_saves_object_data():
     }
 
 
+def test_dict_model_query_set_passes_filters_when_attributes_are_equal():
+    @dataclass
+    class Phone(DictModel):
+        name: str
+
+    assert DictModelQuerySet._passes_filters(Phone(name="cell"), name="cell") is True
+
+
+def test_dict_model_query_set_passes_filters_when_attributes_are_not_equal():
+    @dataclass
+    class Shoe(DictModel):
+        name: str
+
+    assert DictModelQuerySet._passes_filters(Shoe(name="tennis"), name="dress") is False
+
+
+def test_dict_model_query_set_passes_filters_when_attribute_is_in_set():
+    @dataclass
+    class Sport(DictModel):
+        name: str
+
+    assert (
+        DictModelQuerySet._passes_filters(
+            Sport(name="surfing"), name__in=["basketball", "surfing"]
+        )
+        is True
+    )
+
+
+def test_dict_model_query_set_passes_filters_when_attribute_is_not_in_set():
+    @dataclass
+    class Pillow(DictModel):
+        name: str
+
+    assert (
+        DictModelQuerySet._passes_filters(
+            Pillow(name="throw"), name__in=["regular", "body"]
+        )
+        is False
+    )
+
+
 def test_dict_model_query_set_exclude_returns_single_matching_object():
     @dataclass
     class Greeting(DictModel):
