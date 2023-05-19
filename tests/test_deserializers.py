@@ -1,6 +1,13 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 import dict_model
+
+
+def test_datetime_deserialzier():
+    assert dict_model.deserializers.datetime("2023-01-01T00:00:00") == datetime(
+        2023, 1, 1
+    )
 
 
 def test_dict_model_deserializer():

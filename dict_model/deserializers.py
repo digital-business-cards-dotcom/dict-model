@@ -1,9 +1,14 @@
 import typing
+from datetime import datetime as dt
 
 from .lookup import get_dict_model_class
 
 if typing.TYPE_CHECKING:
     from . import DictModel
+
+
+def datetime(value: str) -> dt:
+    return dt.fromisoformat(value)
 
 
 def dict_model(value: typing.Any) -> "DictModel":
