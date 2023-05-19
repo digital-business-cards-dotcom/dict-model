@@ -40,27 +40,6 @@ def test_dict_model_query_set_all_returns_all_entries():
     )
 
 
-def test_dict_model_query_set_create_saves_object_data():
-    @dataclass
-    class Cereal(DictModel):
-        name: str
-
-        object_data = {1: {"name": "Cheerios"}}
-
-    Cereal.init()
-
-    query_set = DictModelQuerySet([], dict_model_class=Cereal)
-
-    chex = query_set.create(name="Chex")
-    assert chex.id == 2
-    assert chex.name == "Chex"
-
-    assert Cereal._object_lookup == {
-        1: Cereal(id=1, name="Cheerios"),
-        2: Cereal(id=2, name="Chex"),
-    }
-
-
 def test_dict_model_query_set_passes_filters_when_attributes_are_equal():
     @dataclass
     class Phone(DictModel):

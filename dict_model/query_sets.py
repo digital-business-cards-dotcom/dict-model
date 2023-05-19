@@ -32,11 +32,6 @@ class DictModelQuerySet(UserList):
     def all(self):
         return self
 
-    def create(self, **kwargs) -> "DictModel":
-        obj = self._dict_model_class(**kwargs)
-        obj.save()
-        return obj
-
     def exclude(self, **kwargs) -> "DictModelQuerySet":
         return DictModelQuerySet(
             [obj for obj in self.data if not self._passes_filters(obj, **kwargs)],
