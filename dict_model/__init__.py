@@ -3,6 +3,7 @@ import functools
 import json
 import re
 import typing
+from datetime import datetime
 from pathlib import Path
 
 from django.utils.functional import classproperty
@@ -243,13 +244,20 @@ class DictModel:
 
     @staticmethod
     def serialize(value: typing.Any) -> typing.Any:
-        if isinstance(value, DictModel):
+        if isinstance(value, datetime):
+            return serializers.datetime(value)
+        elif isinstance(value, DictModel):
             return serializers.dict_model(value)
         return value
 
     @staticmethod
     def deserialize(value: typing.Any) -> typing.Any:
-        if isinstance(value, dict):
+        if isinstance(value, str):
+            try:
+                return deserializers.datetime(value)
+            except ValueError:
+                pass
+        elif isinstance(value, dict):
             if "dict_model_name" in value:
                 return deserializers.dict_model(value)
         return value
