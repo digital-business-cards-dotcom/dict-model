@@ -216,7 +216,7 @@ def test_dict_model_from_dict_raises_error_with_custom_fields(example_model):
         example_model.from_dict({"id": 1, "foo": "bar", "custom": "invalid"})
 
 
-def test_dict_model_save_adds_toobject_lookup(example_model):
+def test_dict_model_save_adds_to_object_lookup(example_model):
     example = example_model(id=1, foo="bar")
     example.save()
     assert example_model.object_lookup == {1: example}
@@ -247,7 +247,7 @@ def test_dict_model_save_defaults_id_to_1(example_model):
     assert example_model.object_lookup == {1: example}
 
 
-def test_dict_model_delete_removes_instance_fromobject_lookup(example_model):
+def test_dict_model_delete_removes_instance_from_object_lookup(example_model):
     example_model.init({1: {"foo": "bar"}}, force=True)
     example = example_model(id=1, foo="bar")
     example.delete()
