@@ -43,7 +43,7 @@ class DictModelQuerySet(UserList):
             dict_model_class=self._dict_model_class,
         )
 
-    def first(self) -> "DictModelQuerySet":
+    def first(self) -> typing.Optional["DictModel"]:
         try:
             return self.data[0]
         except IndexError:
@@ -68,7 +68,7 @@ class DictModelQuerySet(UserList):
 
         return result
 
-    def last(self) -> "DictModel":
+    def last(self) -> typing.Optional["DictModel"]:
         try:
             return self.data[-1]
         except IndexError:

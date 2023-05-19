@@ -14,6 +14,40 @@ from .query_sets import DictModelQuerySet
 __version__ = "0.0.2"
 
 
+@dataclasses.dataclass
+class DictModelObjectManager:
+    dict_model_class: typing.Type["DictModel"]
+
+    def all(self) -> "DictModelQuerySet":
+        return DictModelQuerySet(
+            sorted(
+                [obj for obj in self.dict_model_class._object_lookup.values()],
+                key=lambda obj: obj.id,
+            ),
+            dict_model_class=self.dict_model_class,
+        )
+
+    def create(self, **kwargs) -> "DictModel":
+        obj = self.dict_model_class(**kwargs)
+        obj.save()
+        return obj
+
+    def exclude(self, **kwargs) -> "DictModelQuerySet":
+        return self.all().exclude(**kwargs)
+
+    def first(self) -> typing.Optional["DictModel"]:
+        return self.all().first()
+
+    def filter(self, **kwargs) -> "DictModelQuerySet":
+        return self.all().filter(**kwargs)
+
+    def get(self, **kwargs) -> "DictModel":
+        return self.all().get(**kwargs)
+
+    def last(self, **kwargs) -> typing.Optional["DictModel"]:
+        return self.all().last()
+
+
 @dataclasses.dataclass(kw_only=True)
 class DictModel:
     class AlreadyInitialized(Exception):
@@ -178,15 +212,10 @@ class DictModel:
         path.write_text(json.dumps(json_data))
 
     @classproperty
-    def objects(cls) -> "DictModelQuerySet":
+    def objects(cls) -> "DictModelObjectManager":
         if not hasattr(cls, "_object_lookup"):
             raise DictModel.HasNotBeenInitialized(cls.__name__)
-        return DictModelQuerySet(
-            sorted(
-                [obj for obj in cls._object_lookup.values()], key=lambda obj: obj.id
-            ),
-            dict_model_class=cls,
-        )
+        return DictModelObjectManager(cls)
 
     @classproperty
     def has_been_initialized(cls) -> bool:

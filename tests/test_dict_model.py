@@ -6,7 +6,6 @@ import pytest
 
 import dict_model
 from dict_model.lookup import DictModelNotFound
-from dict_model.query_sets import DictModelQuerySet
 
 from . import TEST_FILES
 
@@ -521,18 +520,8 @@ def test_dict_model_to_json_file_does_not_include_model_name_when_specified(
     }
 
 
-def test_dict_model_objects_returns_query_set_of_objects_ordered_by_id(example_model):
-    example_model.init(
-        {2: {"foo": "boo"}, 1: {"foo": "bar"}, 3: {"foo": "baz"}}, force=True
-    )
-
-    assert example_model.objects == DictModelQuerySet(
-        [
-            example_model(id=1, foo="bar"),
-            example_model(id=2, foo="boo"),
-            example_model(id=3, foo="baz"),
-        ]
-    )
+def test_dict_model_objects_returns_an_object_manager_for_the_class(example_model):
+    assert example_model.objects == dict_model.DictModelObjectManager(example_model)
 
 
 def test_dict_model_objects_raises_error_if_model_has_not_been_initialized():
