@@ -6,7 +6,6 @@ import pytest
 
 import dict_model
 from dict_model.lookup import DictModelNotFound
-from dict_model.query_sets import DictModelQuerySet
 
 from . import TEST_FILES
 
@@ -38,7 +37,7 @@ def test_dict_model_init_with_class_attribute_of_object_data_as_dict_initializes
     OtherExample.init()
 
     # Sets object data.
-    assert OtherExample._object_lookup == {
+    assert OtherExample.object_lookup == {
         1: OtherExample(id=1, name="alex"),
         2: OtherExample(id=2, name="zoey"),
     }
@@ -56,7 +55,7 @@ def test_dict_model_init_with_class_attribute_of_object_data_as_list():
         object_data = [{"name": "alex"}, {"name": "zoey"}]
 
     AnotherExample.init()
-    assert AnotherExample._object_lookup == {
+    assert AnotherExample.object_lookup == {
         1: AnotherExample(id=1, name="alex"),
         2: AnotherExample(id=2, name="zoey"),
     }
@@ -68,7 +67,7 @@ def test_dict_model_init_with_object_data_passed_in():
         name: str
 
     Party.init(object_data={1: {"name": "birthday"}, 2: {"name": "office"}})
-    assert Party._object_lookup == {
+    assert Party.object_lookup == {
         1: Party(id=1, name="birthday"),
         2: Party(id=2, name="office"),
     }
@@ -84,7 +83,7 @@ def test_dict_model_init_with_mix_of_class_attribute_and_passed_in_dict():
 
     Crime.init(object_data={2: {"name": "Speeding", "severity": 10}})
 
-    assert Crime._object_lookup == {
+    assert Crime.object_lookup == {
         1: Crime(id=1, name="Jaywalking", severity=1),
         2: Crime(id=2, name="Speeding", severity=10),
     }
@@ -100,7 +99,7 @@ def test_dict_model_init_with_mix_of_class_attribute_and_passed_in_list():
 
     GoodDeed.init(object_data=[{"name": "Give money", "severity": 100}])
 
-    assert GoodDeed._object_lookup == {
+    assert GoodDeed.object_lookup == {
         1: GoodDeed(id=1, name="Compliment", severity=10),
         2: GoodDeed(id=2, name="Give money", severity=100),
     }
@@ -113,7 +112,7 @@ def test_dict_model_init_with_no_preset_object_data():
         frequency: int
 
     BusLine.init()
-    assert BusLine._object_lookup == {}
+    assert BusLine.object_lookup == {}
 
 
 @pytest.mark.parametrize(
@@ -151,7 +150,7 @@ def test_dict_model_init_raises_error_if_model_has_been_init_already(example_mod
 
 def test_dict_model_init_allows_reinitializing_if_specified(example_model):
     example_model.init(object_data={1: {"foo": "yay"}}, force=True)
-    assert example_model._object_lookup == {1: example_model(id=1, foo="yay")}
+    assert example_model.object_lookup == {1: example_model(id=1, foo="yay")}
 
 
 def test_dict_model_declare_object_with_decorator(example_model):
@@ -168,8 +167,8 @@ def test_dict_model_declare_object_with_decorator(example_model):
         def custom(self):
             return "Not found anywhere else!"
 
-    assert list(example_model._object_lookup.keys()) == [1]
-    obj = example_model._object_lookup[1]
+    assert list(example_model.object_lookup.keys()) == [1]
+    obj = example_model.object_lookup[1]
 
     assert obj == example_model(id=1, foo="hello", active=True, related=related_obj)
 
@@ -220,14 +219,14 @@ def test_dict_model_from_dict_raises_error_with_custom_fields(example_model):
 def test_dict_model_save_adds_to_object_lookup(example_model):
     example = example_model(id=1, foo="bar")
     example.save()
-    assert example_model._object_lookup == {1: example}
+    assert example_model.object_lookup == {1: example}
 
 
 def test_dict_model_save_overwrites_existing_data(example_model):
     example_model.init({1: {"foo": "bar", "active": True}}, force=True)
     example = example_model(id=1, foo="baz", active=False)
     example.save()
-    assert example_model._object_lookup == {1: example}
+    assert example_model.object_lookup == {1: example}
 
 
 def test_dict_model_save_assigns_id_if_none_provided(example_model):
@@ -235,7 +234,7 @@ def test_dict_model_save_assigns_id_if_none_provided(example_model):
     example2 = example_model(foo="baz", active=False)
     example2.save()
     assert example2.id == 2
-    assert example_model._object_lookup == {
+    assert example_model.object_lookup == {
         1: example_model(id=1, foo="bar"),
         2: example_model(id=2, foo="baz", active=False),
     }
@@ -245,14 +244,14 @@ def test_dict_model_save_defaults_id_to_1(example_model):
     example = example_model(foo="baz")
     example.save()
     assert example.id == 1
-    assert example_model._object_lookup == {1: example}
+    assert example_model.object_lookup == {1: example}
 
 
 def test_dict_model_delete_removes_instance_from_object_lookup(example_model):
     example_model.init({1: {"foo": "bar"}}, force=True)
     example = example_model(id=1, foo="bar")
     example.delete()
-    assert example_model._object_lookup == {}
+    assert example_model.object_lookup == {}
 
 
 def test_dict_model_delete_raises_error_if_not_persisted(example_model):
@@ -306,7 +305,7 @@ def test_dict_model_from_json_file_identifies_model_and_initializes_data(
 
     dict_model.DictModel.from_json_file(TEST_FILES / "test.json", force=True)
 
-    assert example_model._object_lookup == {
+    assert example_model.object_lookup == {
         1: example_model(id=1, foo="bar", active=False, related=None),
         2: example_model(
             id=2, foo="baz", active=True, related=OtherModel(id=1, name="hello")
@@ -340,7 +339,7 @@ def test_dict_model_from_json_file_initializes_data_for_specific_model_without_n
 
     example_model.from_json_file(TEST_FILES / "test.json", force=True)
 
-    assert example_model._object_lookup == {
+    assert example_model.object_lookup == {
         1: example_model(id=1, foo="bar", active=False, related=None),
         2: example_model(
             id=2, foo="baz", active=True, related=OtherModel(id=1, name="hello")
@@ -521,18 +520,8 @@ def test_dict_model_to_json_file_does_not_include_model_name_when_specified(
     }
 
 
-def test_dict_model_objects_returns_query_set_of_objects_ordered_by_id(example_model):
-    example_model.init(
-        {2: {"foo": "boo"}, 1: {"foo": "bar"}, 3: {"foo": "baz"}}, force=True
-    )
-
-    assert example_model.objects == DictModelQuerySet(
-        [
-            example_model(id=1, foo="bar"),
-            example_model(id=2, foo="boo"),
-            example_model(id=3, foo="baz"),
-        ]
-    )
+def test_dict_model_objects_returns_an_object_manager_for_the_class(example_model):
+    assert example_model.objects == dict_model.DictModelObjectManager(example_model)
 
 
 def test_dict_model_objects_raises_error_if_model_has_not_been_initialized():

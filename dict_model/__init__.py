@@ -14,6 +14,40 @@ from .query_sets import DictModelQuerySet
 __version__ = "0.0.2"
 
 
+@dataclasses.dataclass
+class DictModelObjectManager:
+    dict_model_class: typing.Type["DictModel"]
+
+    def all(self) -> "DictModelQuerySet":
+        return DictModelQuerySet(
+            sorted(
+                [obj for obj in self.dict_model_class.object_lookup.values()],
+                key=lambda obj: obj.id,
+            ),
+            dict_model_class=self.dict_model_class,
+        )
+
+    def create(self, **kwargs) -> "DictModel":
+        obj = self.dict_model_class(**kwargs)
+        obj.save()
+        return obj
+
+    def exclude(self, **kwargs) -> "DictModelQuerySet":
+        return self.all().exclude(**kwargs)
+
+    def first(self) -> typing.Optional["DictModel"]:
+        return self.all().first()
+
+    def filter(self, **kwargs) -> "DictModelQuerySet":
+        return self.all().filter(**kwargs)
+
+    def get(self, **kwargs) -> "DictModel":
+        return self.all().get(**kwargs)
+
+    def last(self, **kwargs) -> typing.Optional["DictModel"]:
+        return self.all().last()
+
+
 @dataclasses.dataclass(kw_only=True)
 class DictModel:
     class AlreadyInitialized(Exception):
@@ -79,7 +113,7 @@ class DictModel:
         else:
             object_data = cls_object_data
 
-        cls._object_lookup = {}
+        cls.object_lookup = {}
         if isinstance(object_data, dict):
             for id, data in object_data.items():
                 obj = cls.from_dict({**{"id": data.pop("id", id)}, **data})
@@ -170,7 +204,7 @@ class DictModel:
         path = Path(path)
         json_data = {
             "object_data": {
-                id: obj.to_dict() for id, obj in cls._object_lookup.items()
+                id: obj.to_dict() for id, obj in cls.object_lookup.items()
             },
         }
         if specify_model:
@@ -178,15 +212,10 @@ class DictModel:
         path.write_text(json.dumps(json_data))
 
     @classproperty
-    def objects(cls) -> "DictModelQuerySet":
-        if not hasattr(cls, "_object_lookup"):
+    def objects(cls) -> "DictModelObjectManager":
+        if not hasattr(cls, "object_lookup"):
             raise DictModel.HasNotBeenInitialized(cls.__name__)
-        return DictModelQuerySet(
-            sorted(
-                [obj for obj in cls._object_lookup.values()], key=lambda obj: obj.id
-            ),
-            dict_model_class=cls,
-        )
+        return DictModelObjectManager(cls)
 
     @classproperty
     def has_been_initialized(cls) -> bool:
@@ -208,7 +237,7 @@ class DictModel:
                     set(dir(cls))
                     - set(dir(DictModel))
                     - set(cls.field_names)
-                    - set(["_has_been_initialized", "_object_lookup", "object_data"])
+                    - set(["_has_been_initialized", "object_lookup", "object_data"])
                 )
             )
         )
@@ -227,12 +256,12 @@ class DictModel:
             model.init()
 
         if obj.id is None:
-            if model._object_lookup:
-                obj.id = max(model._object_lookup.keys()) + 1
+            if model.object_lookup:
+                obj.id = max(model.object_lookup.keys()) + 1
             else:
                 obj.id = 1
 
-        model._object_lookup[obj.id] = obj
+        model.object_lookup[obj.id] = obj
 
         # When available, set a constant for quick lookup, based on the `name` attribute
         try:
@@ -264,7 +293,7 @@ class DictModel:
 
     def delete(self) -> None:
         try:
-            del self._object_lookup[self.id]
+            del self.object_lookup[self.id]
         except KeyError:
             raise DictModel.NotPersisted(self.id)
 

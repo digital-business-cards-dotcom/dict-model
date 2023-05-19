@@ -32,18 +32,13 @@ class DictModelQuerySet(UserList):
     def all(self):
         return self
 
-    def create(self, **kwargs) -> "DictModel":
-        obj = self._dict_model_class(**kwargs)
-        obj.save()
-        return obj
-
     def exclude(self, **kwargs) -> "DictModelQuerySet":
         return DictModelQuerySet(
             [obj for obj in self.data if not self._passes_filters(obj, **kwargs)],
             dict_model_class=self._dict_model_class,
         )
 
-    def first(self) -> "DictModelQuerySet":
+    def first(self) -> typing.Optional["DictModel"]:
         try:
             return self.data[0]
         except IndexError:
@@ -68,7 +63,7 @@ class DictModelQuerySet(UserList):
 
         return result
 
-    def last(self) -> "DictModel":
+    def last(self) -> typing.Optional["DictModel"]:
         try:
             return self.data[-1]
         except IndexError:
