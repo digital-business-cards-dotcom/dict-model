@@ -77,7 +77,11 @@ class DictModelQuerySet(UserList):
     @staticmethod
     def _passes_filters(obj, **filters) -> bool:
         for field, value in filters.items():
-            if getattr(obj, field) != value:
+            if field.endswith("__in"):
+                field, *_ = field.split("__in")
+                if getattr(obj, field) not in value:
+                    return False
+            elif getattr(obj, field) != value:
                 return False
         return True
 
