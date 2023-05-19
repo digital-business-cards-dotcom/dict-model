@@ -7,7 +7,7 @@ import dict_model
 
 
 def test_datetime_serializer(freezer):
-    freezer.move_to('2023-01-01')
+    freezer.move_to("2023-01-01")
     assert dict_model.serializers.datetime(datetime.utcnow()) == "2023-01-01T00:00:00"
 
 
