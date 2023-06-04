@@ -203,9 +203,7 @@ class DictModel:
     ) -> None:
         path = Path(path)
         json_data = {
-            "object_data": {
-                id: obj.to_dict() for id, obj in cls.object_lookup.items()
-            },
+            "object_data": {id: obj.to_dict() for id, obj in cls.object_lookup.items()},
         }
         if specify_model:
             json_data["dict_model_name"] = cls.__name__
@@ -247,8 +245,37 @@ class DictModel:
         return self.id
 
     @staticmethod
-    def _snake_case(pascal_case: str) -> str:
-        return re.sub(r"(?<!^)(?=[A-Z])", "_", pascal_case).lower()
+    def deserialize(value: typing.Any) -> typing.Any:
+        if isinstance(value, str):
+            try:
+                return deserializers.datetime(value)
+            except ValueError:
+                pass
+        elif isinstance(value, dict):
+            if "dict_model_name" in value:
+                return deserializers.dict_model(value)
+        return value
+
+    @staticmethod
+    def serialize(value: typing.Any) -> typing.Any:
+        if isinstance(value, datetime):
+            return serializers.datetime(value)
+        elif isinstance(value, DictModel):
+            return serializers.dict_model(value)
+        return value
+
+    @staticmethod
+    def snake_case(text: str) -> str:
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", text).replace(" ", "").lower()
+
+    def delete(self) -> None:
+        try:
+            del self.object_lookup[self.id]
+        except KeyError:
+            raise DictModel.NotPersisted(self.id)
+
+    def save(self) -> None:
+        self._save_object_data(self.__class__, self)
 
     @staticmethod
     def _save_object_data(model, obj) -> None:
@@ -265,40 +292,11 @@ class DictModel:
 
         # When available, set a constant for quick lookup, based on the `name` attribute
         try:
-            lookup_constant = model._snake_case(obj.name).upper()
+            lookup_constant = model.snake_case(obj.name).upper()
             if not hasattr(model, lookup_constant):
                 setattr(model, lookup_constant, obj)
         except AttributeError:
             pass
-
-    @staticmethod
-    def serialize(value: typing.Any) -> typing.Any:
-        if isinstance(value, datetime):
-            return serializers.datetime(value)
-        elif isinstance(value, DictModel):
-            return serializers.dict_model(value)
-        return value
-
-    @staticmethod
-    def deserialize(value: typing.Any) -> typing.Any:
-        if isinstance(value, str):
-            try:
-                return deserializers.datetime(value)
-            except ValueError:
-                pass
-        elif isinstance(value, dict):
-            if "dict_model_name" in value:
-                return deserializers.dict_model(value)
-        return value
-
-    def delete(self) -> None:
-        try:
-            del self.object_lookup[self.id]
-        except KeyError:
-            raise DictModel.NotPersisted(self.id)
-
-    def save(self) -> None:
-        self._save_object_data(self.__class__, self)
 
     def to_dict(self) -> dict:
         if self.__class__.get_custom_attributes_of_child(self):

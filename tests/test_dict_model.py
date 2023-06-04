@@ -200,6 +200,14 @@ def test_dict_model_pk_attribute_returns_id(example_model):
     assert example.pk == 1
 
 
+def test_dict_model_snake_case_handles_pascal_case():
+    assert dict_model.DictModel.snake_case("HelloWorld") == "hello_world"
+
+
+def test_dict_model_snake_case_handles_spaces():
+    assert dict_model.DictModel.snake_case("Hello World") == "hello_world"
+
+
 def test_dict_model_from_dict(example_model):
     example_model.init({2: {"foo": "boo"}}, force=True)
 
