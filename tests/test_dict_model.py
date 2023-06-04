@@ -533,14 +533,23 @@ def test_dict_model_objects_returns_an_object_manager_for_the_class(example_mode
 
 
 def test_dict_model_objects_can_be_a_custom_object_manager():
+    class CustomObjectManager(dict_model.DictModelObjectManager):
+        def funky(self, id):
+            obj = self.get(id=id)
+            return f"get funky: {obj.name}"
+
     @dataclass
     class CustomManagement(dict_model.DictModel):
         name: str
 
-        objects = "CustomManager"
+        object_data = {
+            1: {"id": 1, "name": "monkey"}
+        }
+
+        objects = CustomObjectManager
 
     CustomManagement.init()
-    assert CustomManagement.objects == "CustomManager"
+    assert CustomManagement.objects.funky(1) == "get funky: monkey"
 
 
 def test_dict_model_objects_raises_error_if_model_has_not_been_initialized():

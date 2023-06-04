@@ -18,6 +18,10 @@ __version__ = "0.0.4"
 class DictModelObjectManager:
     dict_model_class: typing.Type["DictModel"]
 
+    def __call__(self, cls):
+        self.dict_model_class = cls
+        return self
+
     def all(self) -> "DictModelQuerySet":
         return DictModelQuerySet(
             sorted(
@@ -85,8 +89,11 @@ class DictModel:
         if not force and cls.has_been_initialized:
             raise DictModel.AlreadyInitialized(cls.__name__)
 
-        if "objects" not in dir(cls):
+        if "objects" in dir(cls):
+            cls.objects = cls.objects(cls)
+        else:
             cls.objects = DictModelObjectManager(cls)
+
         lookup.set_dict_model_class(cls.__name__, cls)
 
         cls_object_data = getattr(cls, "object_data", None)
