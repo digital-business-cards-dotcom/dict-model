@@ -532,10 +532,21 @@ def test_dict_model_objects_returns_an_object_manager_for_the_class(example_mode
     assert example_model.objects == dict_model.DictModelObjectManager(example_model)
 
 
+def test_dict_model_objects_can_be_a_custom_object_manager():
+    @dataclass
+    class CustomManagement(dict_model.DictModel):
+        name: str
+
+        objects = "CustomManager"
+
+    CustomManagement.init()
+    assert CustomManagement.objects == "CustomManager"
+
+
 def test_dict_model_objects_raises_error_if_model_has_not_been_initialized():
     @dataclass
     class PizzaSize(dict_model.DictModel):
         name: str
 
-    with pytest.raises(dict_model.DictModel.HasNotBeenInitialized):
+    with pytest.raises(AttributeError):
         PizzaSize.objects

@@ -85,6 +85,8 @@ class DictModel:
         if not force and cls.has_been_initialized:
             raise DictModel.AlreadyInitialized(cls.__name__)
 
+        if "objects" not in dir(cls):
+            cls.objects = DictModelObjectManager(cls)
         lookup.set_dict_model_class(cls.__name__, cls)
 
         cls_object_data = getattr(cls, "object_data", None)
@@ -210,12 +212,6 @@ class DictModel:
         path.write_text(json.dumps(json_data))
 
     @classproperty
-    def objects(cls) -> "DictModelObjectManager":
-        if not hasattr(cls, "object_lookup"):
-            raise DictModel.HasNotBeenInitialized(cls.__name__)
-        return DictModelObjectManager(cls)
-
-    @classproperty
     def has_been_initialized(cls) -> bool:
         return getattr(cls, "_has_been_initialized", False)
 
@@ -235,7 +231,14 @@ class DictModel:
                     set(dir(cls))
                     - set(dir(DictModel))
                     - set(cls.field_names)
-                    - set(["_has_been_initialized", "object_lookup", "object_data"])
+                    - set(
+                        [
+                            "_has_been_initialized",
+                            "objects",
+                            "object_lookup",
+                            "object_data",
+                        ]
+                    )
                 )
             )
         )
