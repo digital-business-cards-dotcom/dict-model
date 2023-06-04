@@ -265,8 +265,8 @@ class DictModel:
         return value
 
     @staticmethod
-    def snake_case(pascal_case: str) -> str:
-        return re.sub(r"(?<!^)(?=[A-Z])", "_", pascal_case).replace(" ", "").lower()
+    def snake_case(text: str) -> str:
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", text).replace(" ", "").lower()
 
     def delete(self) -> None:
         try:
