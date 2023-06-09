@@ -11,7 +11,7 @@ from django.utils.functional import classproperty
 from . import deserializers, lookup, serializers
 from .query_sets import DictModelQuerySet
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 
 @dataclasses.dataclass
