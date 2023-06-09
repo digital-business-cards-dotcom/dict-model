@@ -279,11 +279,10 @@ def test_dict_model_to_dict(example_model):
     }
 
 
-def test_dict_model_to_dict_raises_error_with_custom_attributes(example_model):
+def test_dict_model_to_dict_ignores_custom_attributes(example_model):
     example = example_model(id=1, foo="bar")
     example.custom = lambda _: "this won't serialize!"
-    with pytest.raises(dict_model.DictModel.CannotSerializeCustomAttributes):
-        example.to_dict()
+    assert "custom" not in example.to_dict()
 
 
 def test_dict_model_from_json_file_identifies_model_and_initializes_data(
