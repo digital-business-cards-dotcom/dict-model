@@ -543,9 +543,7 @@ def test_dict_model_objects_can_be_a_custom_object_manager():
 
         name: str
 
-        object_data = {
-            1: {"id": 1, "name": "monkey"}
-        }
+        object_data = {1: {"id": 1, "name": "monkey"}}
 
     CustomManagement.init()
     assert CustomManagement.objects.funky(1) == "get funky: monkey"

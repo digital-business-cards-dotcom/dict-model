@@ -3,9 +3,9 @@ import functools
 import json
 import re
 import typing
+from copy import copy
 from datetime import datetime
 from pathlib import Path
-from copy import copy
 
 from django.utils.functional import classproperty
 
@@ -55,7 +55,6 @@ class DictModelObjectManager:
 
 @dataclasses.dataclass(kw_only=True)
 class DictModel:
-
     class AlreadyInitialized(Exception):
         pass
 
