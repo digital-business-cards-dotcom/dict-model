@@ -5,6 +5,7 @@ import re
 import typing
 from datetime import datetime
 from pathlib import Path
+from copy import copy
 
 from django.utils.functional import classproperty
 
@@ -16,9 +17,9 @@ __version__ = "0.0.6"
 
 @dataclasses.dataclass
 class DictModelObjectManager:
-    dict_model_class: typing.Type["DictModel"]
+    dict_model_class: typing.Optional[typing.Type["DictModel"]] = None
 
-    def __call__(self, cls):
+    def assign(self, cls):
         self.dict_model_class = cls
         return self
 
@@ -54,6 +55,7 @@ class DictModelObjectManager:
 
 @dataclasses.dataclass(kw_only=True)
 class DictModel:
+
     class AlreadyInitialized(Exception):
         pass
 
@@ -78,6 +80,8 @@ class DictModel:
     class NotPersisted(Exception):
         pass
 
+    objects = DictModelObjectManager()
+
     id: typing.Optional[int] = None
 
     @classmethod
@@ -89,11 +93,10 @@ class DictModel:
         if not force and cls.has_been_initialized:
             raise DictModel.AlreadyInitialized(cls.__name__)
 
-        if "objects" in dir(cls):
-            cls.objects = cls.objects(cls)
-        else:
-            cls.objects = DictModelObjectManager(cls)
+        # Do not share a single instance of `DictModelObjectManager` across all classes.
+        cls.objects = copy(cls.objects)
 
+        cls.objects.assign(cls)
         lookup.set_dict_model_class(cls.__name__, cls)
 
         cls_object_data = getattr(cls, "object_data", None)
