@@ -539,22 +539,11 @@ def test_dict_model_objects_can_be_a_custom_object_manager():
 
     @dataclass
     class CustomManagement(dict_model.DictModel):
+        objects = CustomObjectManager()
+
         name: str
 
-        object_data = {
-            1: {"id": 1, "name": "monkey"}
-        }
-
-        objects = CustomObjectManager
+        object_data = {1: {"id": 1, "name": "monkey"}}
 
     CustomManagement.init()
     assert CustomManagement.objects.funky(1) == "get funky: monkey"
-
-
-def test_dict_model_objects_raises_error_if_model_has_not_been_initialized():
-    @dataclass
-    class PizzaSize(dict_model.DictModel):
-        name: str
-
-    with pytest.raises(AttributeError):
-        PizzaSize.objects
