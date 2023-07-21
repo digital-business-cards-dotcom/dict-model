@@ -38,7 +38,7 @@ class DictModelField(models.IntegerField):
 
     @property
     def non_db_attrs(self):
-        return super().non_db_attrs + ("_dict_model_class")
+        return super().non_db_attrs + ("_dict_model_class",)
 
     def clean(self, value, model_instance):
         value = self.to_python(value).id
